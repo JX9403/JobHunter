@@ -50,9 +50,9 @@ public class CompanyController {
   }
 
   @DeleteMapping("/companies/{id}")
-  public ResponseEntity<String> deleteCompany(@PathVariable("id") long id) {
+  public ResponseEntity<Void> deleteCompany(@PathVariable("id") long id) {
     this.companyService.handleDeleteCompany(id);
-    return ResponseEntity.ok("delete");
+    return ResponseEntity.ok(null);
   }
 
   @PutMapping("/companies")
