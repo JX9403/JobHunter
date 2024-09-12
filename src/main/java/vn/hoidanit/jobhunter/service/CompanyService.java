@@ -10,14 +10,17 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import vn.hoidanit.jobhunter.domain.Company;
+import vn.hoidanit.jobhunter.domain.User;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO.Meta;
 import vn.hoidanit.jobhunter.repository.CompanyRepository;
+import vn.hoidanit.jobhunter.repository.UserRepository;
 
 @Service
 public class CompanyService {
 
   private CompanyRepository companyRepository;
+  private UserRepository userRepository;
 
   public CompanyService(CompanyRepository companyRepository) {
     this.companyRepository = companyRepository;
@@ -53,6 +56,14 @@ public class CompanyService {
   }
 
   public void handleDeleteCompany(long id) {
+    Optional<Company> comOptional = this.companyRepository.findById(id);
+    if (comOptional.isPresent()) {
+      Company com = comOptional.get();
+      List<User> users = this.userRepository.findByCompany(com);
+
+      this.userRepository.deleteAll(users);
+    }
+
     this.companyRepository.deleteById(id);
   }
 
@@ -69,4 +80,7 @@ public class CompanyService {
     return updateCompany;
   }
 
+  public Optional<Company> findById(Company company) {
+    return this.companyRepository.findById(company.getId());
+  }
 }

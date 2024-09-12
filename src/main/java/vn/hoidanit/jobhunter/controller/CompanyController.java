@@ -1,6 +1,7 @@
 package vn.hoidanit.jobhunter.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -51,6 +52,7 @@ public class CompanyController {
 
   @DeleteMapping("/companies/{id}")
   public ResponseEntity<Void> deleteCompany(@PathVariable("id") long id) {
+
     this.companyService.handleDeleteCompany(id);
     return ResponseEntity.ok(null);
   }
