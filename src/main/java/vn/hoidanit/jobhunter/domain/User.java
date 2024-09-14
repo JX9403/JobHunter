@@ -36,32 +36,34 @@ public class User {
 
     private String name;
 
-    @NotBlank(message = "Email khong duoc de trong!")
+    @NotBlank(message = "email không được để trống")
     private String email;
 
-    @NotBlank(message = "Password khong duoc de trong!")
+    @NotBlank(message = "password không được để trống")
     private String password;
+
     private int age;
 
     @Enumerated(EnumType.STRING)
-    private GenderEnum gender; // MALE/FEMALE
+    private GenderEnum gender;
 
     private String address;
 
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
+
     private Instant createdAt;
     private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    List<Resume> resumes;
-
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
+    List<Resume> resumes;
 
     @PrePersist
     public void handleBeforeCreate() {

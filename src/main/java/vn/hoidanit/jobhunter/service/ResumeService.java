@@ -59,7 +59,6 @@ public class ResumeService {
     }
 
     public ResCreateResumeDTO create(Resume resume) {
-
         resume = this.resumeRepository.save(resume);
 
         ResCreateResumeDTO res = new ResCreateResumeDTO();
@@ -92,6 +91,10 @@ public class ResumeService {
         res.setCreatedBy(resume.getCreatedBy());
         res.setUpdatedAt(resume.getUpdatedAt());
         res.setUpdatedBy(resume.getUpdatedBy());
+
+        if (resume.getJob() != null) {
+            res.setCompanyName(resume.getJob().getCompany().getName());
+        }
 
         res.setUser(new ResFetchResumeDTO.UserResume(resume.getUser().getId(), resume.getUser().getName()));
         res.setJob(new ResFetchResumeDTO.JobResume(resume.getJob().getId(), resume.getJob().getName()));

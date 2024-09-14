@@ -2,14 +2,14 @@ package vn.hoidanit.jobhunter.util;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,15 +21,11 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.stereotype.Service;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
-import jakarta.el.ArrayELResolver;
 import vn.hoidanit.jobhunter.domain.response.ResLoginDTO;
-import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @Service
 public class SecurityUtil {
@@ -55,7 +51,9 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
+        // hardcode permission (for testing)
         List<String> listAuthority = new ArrayList<String>();
+
         listAuthority.add("ROLE_USER_CREATE");
         listAuthority.add("ROLE_USER_UPDATE");
 
@@ -90,27 +88,23 @@ public class SecurityUtil {
 
     }
 
-    
-      private SecretKey getSecretKey() {
+    private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(jwtKey).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length,
-                SecurityUtil.JWT_ALGORITHM.getName());
+                JWT_ALGORITHM.getName());
     }
 
-
-    public Jwt checkValidRefreshToken(String token) throws IdInvalidException{
-         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
+    public Jwt checkValidRefreshToken(String token){
+     NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
                 getSecretKey()).macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
                 try {
-                    return jwtDecoder.decode(token);
-
+                     return jwtDecoder.decode(token);
                 } catch (Exception e) {
-                    // TODO: handle exception
-                    System.out.println(">>>Refresh token error : " + e.getMessage());
-                    throw new IdInvalidException("Refresh token khong hop le!");
+                    System.out.println(">>> Refresh Token error: " + e.getMessage());
+                    throw e;
                 }
     }
-
+    
     /**
      * Get the login of the current user.
      *

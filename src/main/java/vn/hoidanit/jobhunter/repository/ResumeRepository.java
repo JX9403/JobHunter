@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import vn.hoidanit.jobhunter.domain.Resume;
 
 @Repository
-public interface ResumeRepository extends JpaRepository<Resume, Long>, JpaSpecificationExecutor<Resume> {
+public interface ResumeRepository extends JpaRepository<Resume, Long>,
+        JpaSpecificationExecutor<Resume> {
 
 }
