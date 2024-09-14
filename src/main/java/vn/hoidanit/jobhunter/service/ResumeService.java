@@ -1,13 +1,20 @@
 package vn.hoidanit.jobhunter.service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Resume;
 import vn.hoidanit.jobhunter.domain.User;
+import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.domain.response.resume.ResCreateResumeDTO;
+import vn.hoidanit.jobhunter.domain.response.resume.ResFetchResumeDTO;
 import vn.hoidanit.jobhunter.domain.response.resume.ResUpdateResumeDTO;
 import vn.hoidanit.jobhunter.repository.JobRepository;
 import vn.hoidanit.jobhunter.repository.ResumeRepository;
@@ -15,63 +22,103 @@ import vn.hoidanit.jobhunter.repository.UserRepository;
 
 @Service
 public class ResumeService {
-  private ResumeRepository resumeRepository;
-  private UserRepository userRepository;
-  private JobRepository jobRepository;
 
-  public ResumeService(ResumeRepository resumeRepository, UserRepository serRepository, JobRepository jobRepository) {
-    this.resumeRepository = resumeRepository;
-    this.userRepository = userRepository;
-    this.jobRepository = jobRepository;
-  }
+    private final ResumeRepository resumeRepository;
+    private final UserRepository userRepository;
+    private final JobRepository jobRepository;
 
-  public boolean checkResumeExistByUserAndJob(Resume resume) {
-    if (resume.getUser() == null) {
-      return false;
-    }
-    Optional<User> userOptional = this.userRepository.findById(resume.getUser().getId());
-    if (userOptional.isEmpty())
-      return false;
-
-    if (resume.getJob() == null) {
-      return false;
+    public ResumeService(
+            ResumeRepository resumeRepository,
+            UserRepository userRepository,
+            JobRepository jobRepository) {
+        this.resumeRepository = resumeRepository;
+        this.userRepository = userRepository;
+        this.jobRepository = jobRepository;
     }
 
-    Optional<Job> jobOptional = this.jobRepository.findById(resume.getJob().getId());
-    if (jobOptional.isEmpty())
-      return false;
-
-    return true;
-
-  }
-
-  public Optional<Resume> fetchById(long id) {
-    Optional<Resume> resumeOptional = this.resumeRepository.findById(id);
-    if (resumeOptional.isPresent()) {
-      return resumeOptional;
+    public Optional<Resume> fetchById(long id) {
+        return this.resumeRepository.findById(id);
     }
-    return null;
-  }
 
-  public ResCreateResumeDTO create(Resume resume) {
-    resume = this.resumeRepository.save(resume);
+    public boolean checkResumeExistByUserAndJob(Resume resume) {
+        // check user by id
+        if (resume.getUser() == null)
+            return false;
+        Optional<User> userOptional = this.userRepository.findById(resume.getUser().getId());
+        if (userOptional.isEmpty())
+            return false;
 
-    ResCreateResumeDTO res = new ResCreateResumeDTO();
-    res.setId(resume.getId());
-    res.setCreatedAt(resume.getCreatedAt());
-    res.setCreatedBy(resume.getCreatedBy());
+        // check job by id
+        if (resume.getJob() == null)
+            return false;
+        Optional<Job> jobOptional = this.jobRepository.findById(resume.getJob().getId());
+        if (jobOptional.isEmpty())
+            return false;
 
-    return res;
-  }
+        return true;
+    }
 
-  public ResUpdateResumeDTO update(Resume resume) {
+    public ResCreateResumeDTO create(Resume resume) {
 
-    resume = this.resumeRepository.save(resume);
+        resume = this.resumeRepository.save(resume);
 
-    ResUpdateResumeDTO res = new ResUpdateResumeDTO();
-    res.setUpdatedAt(resume.getUpdatedAt());
-    res.setUpdatedBy(resume.getUpdatedBy());
+        ResCreateResumeDTO res = new ResCreateResumeDTO();
+        res.setId(resume.getId());
+        res.setCreatedBy(resume.getCreatedBy());
+        res.setCreatedAt(resume.getCreatedAt());
 
-    return res;
-  }
+        return res;
+    }
+
+    public ResUpdateResumeDTO update(Resume resume) {
+        resume = this.resumeRepository.save(resume);
+        ResUpdateResumeDTO res = new ResUpdateResumeDTO();
+        res.setUpdatedAt(resume.getUpdatedAt());
+        res.setUpdatedBy(resume.getUpdatedBy());
+        return res;
+    }
+
+    public void delete(long id) {
+        this.resumeRepository.deleteById(id);
+    }
+
+    public ResFetchResumeDTO getResume(Resume resume) {
+        ResFetchResumeDTO res = new ResFetchResumeDTO();
+        res.setId(resume.getId());
+        res.setEmail(resume.getEmail());
+        res.setUrl(resume.getUrl());
+        res.setStatus(resume.getStatus());
+        res.setCreatedAt(resume.getCreatedAt());
+        res.setCreatedBy(resume.getCreatedBy());
+        res.setUpdatedAt(resume.getUpdatedAt());
+        res.setUpdatedBy(resume.getUpdatedBy());
+
+        res.setUser(new ResFetchResumeDTO.UserResume(resume.getUser().getId(), resume.getUser().getName()));
+        res.setJob(new ResFetchResumeDTO.JobResume(resume.getJob().getId(), resume.getJob().getName()));
+
+        return res;
+    }
+
+    public ResultPaginationDTO fetchAllResume(Specification<Resume> spec, Pageable pageable) {
+        Page<Resume> pageUser = this.resumeRepository.findAll(spec, pageable);
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+
+        mt.setPage(pageable.getPageNumber() + 1);
+        mt.setPageSize(pageable.getPageSize());
+
+        mt.setPages(pageUser.getTotalPages());
+        mt.setTotal(pageUser.getTotalElements());
+
+        rs.setMeta(mt);
+
+        // remove sensitive data
+        List<ResFetchResumeDTO> listResume = pageUser.getContent()
+                .stream().map(item -> this.getResume(item))
+                .collect(Collectors.toList());
+
+        rs.setResult(listResume);
+
+        return rs;
+    }
 }

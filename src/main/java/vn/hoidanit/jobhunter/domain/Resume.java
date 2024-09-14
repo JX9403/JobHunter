@@ -2,7 +2,6 @@ package vn.hoidanit.jobhunter.domain;
 
 import java.time.Instant;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -25,49 +23,50 @@ import vn.hoidanit.jobhunter.util.constant.ResumeStateEnum;
 @Table(name = "resumes")
 @Getter
 @Setter
-
 public class Resume {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
-  @NotBlank(message = "Email khong duoc de trong!")
-  private String email;
-  @NotBlank(message = "URL khong duoc de trong/ upload khong thanh cong!")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-  private String url;
+    @NotBlank(message = "email không được để trống")
+    private String email;
 
-  @Enumerated(EnumType.STRING)
-  private ResumeStateEnum status;
+    @NotBlank(message = "url không được để trống (upload cv chưa thành công)")
+    private String url;
 
-  @ManyToOne
-  @JoinColumn(name = "job_id")
-  private Job job;
+    @Enumerated(EnumType.STRING)
+    private ResumeStateEnum status;
 
-  @ManyToOne
-  @JoinColumn(name = "user_id")
-  private User user;
+    private Instant createdAt;
+    private Instant updatedAt;
 
-  private Instant createdAt;
-  private Instant updatedAt;
-  private String createdBy;
-  private String updatedBy;
+    private String createdBy;
+    private String updatedBy;
 
-  @PrePersist
-  public void handleBeforeCreate() {
-    this.createdBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
-        ? SecurityUtil.getCurrentUserLogin().get()
-        : "";
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    this.createdAt = Instant.now();
-  }
+    @ManyToOne
+    @JoinColumn(name = "job_id")
+    private Job job;
 
-  @PreUpdate
-  public void handleBeforeUpdate() {
-    this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
-        ? SecurityUtil.getCurrentUserLogin().get()
-        : "";
+    @PrePersist
+    public void handleBeforeCreate() {
+        this.createdBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
 
-    this.updatedAt = Instant.now();
-  }
+        this.createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    public void handleBeforeUpdate() {
+        this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+
+        this.updatedAt = Instant.now();
+    }
 
 }

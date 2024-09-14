@@ -10,23 +10,23 @@ import vn.hoidanit.jobhunter.util.constant.LevelEnum;
 @Getter
 @Setter
 public class ResCreateJobDTO {
-  private long id;
-  private String name;
+    private long id;
+    private String name;
 
-  private String location;
+    private String location;
 
-  private double salary;
+    private double salary;
 
-  private int quantity;
+    private int quantity;
 
-  private LevelEnum level;
+    private LevelEnum level;
 
-  private Instant startDate;
-  private Instant endDate;
-  private boolean isActive;
+    private Instant startDate;
+    private Instant endDate;
+    private boolean isActive;
 
-  private List<String> skills;
+    private List<String> skills;
 
-  private Instant createdAt;
-  private String createdBy;
+    private Instant createdAt;
+    private String createdBy;
 }
