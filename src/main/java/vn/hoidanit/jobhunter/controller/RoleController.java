@@ -1,16 +1,5 @@
 package vn.hoidanit.jobhunter.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.turkraft.springfilter.boot.Filter;
-
-import vn.hoidanit.jobhunter.domain.Role;
-import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
-import vn.hoidanit.jobhunter.service.RoleService;
-import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
-import vn.hoidanit.jobhunter.util.error.IdInvalidException;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -21,54 +10,82 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.turkraft.springfilter.boot.Filter;
+import jakarta.validation.Valid;
+import vn.hoidanit.jobhunter.domain.Role;
+import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
+import vn.hoidanit.jobhunter.service.RoleService;
+import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
+import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @RestController
 @RequestMapping("/api/v1")
 public class RoleController {
-  public final RoleService roleService;
 
-  public RoleController(RoleService roleService) {
-    this.roleService = roleService;
-  }
+    private final RoleService roleService;
 
-  @PostMapping("/roles")
-  @ApiMessage("Create a role")
-  public ResponseEntity<Role> create(@RequestBody Role role) throws IdInvalidException {
-    // TODO: process POST request
-    if (this.roleService.existByName(role.getName())) {
-      throw new IdInvalidException("Role " + role.getName() + " da ton tai!");
+    public RoleController(RoleService roleService) {
+        this.roleService = roleService;
     }
-    return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.create(role));
-  }
 
-  @PutMapping("/roles")
-  @ApiMessage("Update a role")
-  public ResponseEntity<Role> update(@RequestBody Role role) throws IdInvalidException {
-    if (this.roleService.fetchById(role.getId()) == null) {
-      throw new IdInvalidException("Role khong ton tai!");
+    @PostMapping("/roles")
+    @ApiMessage("Create a role")
+    public ResponseEntity<Role> create(@Valid @RequestBody Role r) throws IdInvalidException {
+        // check name
+        if (this.roleService.existByName(r.getName())) {
+            throw new IdInvalidException("Role với name = " + r.getName() + " đã tồn tại");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.create(r));
     }
-    // TODO: process POST request
-    if (this.roleService.existByName(role.getName())) {
-      throw new IdInvalidException("Role " + role.getName() + " da ton tai!");
+
+    @PutMapping("/roles")
+    @ApiMessage("Update a role")
+    public ResponseEntity<Role> update(@Valid @RequestBody Role r) throws IdInvalidException {
+        // check id
+        if (this.roleService.fetchById(r.getId()) == null) {
+            throw new IdInvalidException("Role với id = " + r.getId() + " không tồn tại");
+        }
+
+        // check name
+        // if (this.roleService.existByName(r.getName())) {
+        // throw new IdInvalidException("Role với name = " + r.getName() + " đã tồn
+        // tại");
+        // }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.update(r));
     }
-    return ResponseEntity.status(HttpStatus.OK).body(this.roleService.update(role));
-  }
 
-  @DeleteMapping("/roles/{id}")
-  @ApiMessage("Delete a role")
-  public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
-    if (this.roleService.fetchById(id) == null) {
-      throw new IdInvalidException("Role khong ton tai!");
+    @DeleteMapping("/roles/{id}")
+    @ApiMessage("Delete a role")
+    public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
+        // check id
+        if (this.roleService.fetchById(id) == null) {
+            throw new IdInvalidException("Role với id = " + id + " không tồn tại");
+        }
+        this.roleService.delete(id);
+        return ResponseEntity.ok().body(null);
     }
-    this.roleService.delete(id);
-    return ResponseEntity.status(HttpStatus.OK).body(null);
-  }
 
-  @GetMapping("/roles")
-  @ApiMessage("Get role with pagination")
-  public ResponseEntity<ResultPaginationDTO> getPermission(@Filter Specification spec, Pageable pageable) {
+    @GetMapping("/roles")
+    @ApiMessage("Fetch roles")
+    public ResponseEntity<ResultPaginationDTO> getPermissions(
+            @Filter Specification<Role> spec, Pageable pageable) {
 
-    return ResponseEntity.status(HttpStatus.OK).body(this.roleService.fetchAll(spec, pageable));
-  }
+        return ResponseEntity.ok(this.roleService.getRoles(spec, pageable));
+    }
+
+    @GetMapping("/roles/{id}")
+    @ApiMessage("Fetch role by id")
+    public ResponseEntity<Role> getById(@PathVariable("id") long id) throws IdInvalidException {
+
+        Role role = this.roleService.fetchById(id);
+        if (role == null) {
+            throw new IdInvalidException("Resume với id = " + id + " không tồn tại");
+        }
+
+        return ResponseEntity.ok().body(role);
+    }
 
 }

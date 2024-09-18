@@ -1,82 +1,88 @@
 package vn.hoidanit.jobhunter.service;
 
 import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import vn.hoidanit.jobhunter.domain.Job;
 import vn.hoidanit.jobhunter.domain.Permission;
 import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.PermissionRepository;
 
 @Service
 public class PermissionService {
-  private final PermissionRepository permissionRepository;
 
-  public PermissionService(PermissionRepository permissionRepository) {
-    this.permissionRepository = permissionRepository;
-  }
+    private final PermissionRepository permissionRepository;
 
-  public boolean isPermissionExist(Permission p) {
-    return this.permissionRepository.existsByModuleAndApiPathAndMethod(
-        p.getModule(),
-        p.getApiPath(),
-        p.getMethod());
-  }
-
-  public Permission fetchById(long id) {
-    Optional<Permission> p = this.permissionRepository.findById(id);
-    if (p != null)
-      return p.get();
-    else
-      return null;
-  }
-
-  public Permission create(Permission p) {
-    return this.permissionRepository.save(p);
-  }
-
-  public Permission update(Permission p) {
-    Permission permissionDB = this.fetchById(p.getId());
-    if (permissionDB != null) {
-      permissionDB.setName(p.getName());
-      permissionDB.setApiPath(p.getApiPath());
-      permissionDB.setMethod(p.getMethod());
-      permissionDB.setModule(p.getModule());
-
-      this.permissionRepository.save(permissionDB);
-      return permissionDB;
+    public PermissionService(PermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
     }
-    return null;
-  }
 
-  public void delete(long id) {
-    Permission permissionDB = this.fetchById(id);
+    public boolean isPermissionExist(Permission p) {
+        return permissionRepository.existsByModuleAndApiPathAndMethod(
+                p.getModule(),
+                p.getApiPath(),
+                p.getMethod());
+    }
 
-    permissionDB.getRoles().forEach(role -> role.getPermissions().remove(permissionDB));
+    public Permission fetchById(long id) {
+        Optional<Permission> permissionOptional = this.permissionRepository.findById(id);
+        if (permissionOptional.isPresent())
+            return permissionOptional.get();
+        return null;
+    }
 
-    this.permissionRepository.delete(permissionDB);
-  }
+    public Permission create(Permission p) {
+        return this.permissionRepository.save(p);
+    }
 
-  public ResultPaginationDTO fetchAll(Specification<Permission> spec, Pageable pageable) {
-    Page<Permission> pagePermission = this.permissionRepository.findAll(spec, pageable);
+    public Permission update(Permission p) {
+        Permission permissionDB = this.fetchById(p.getId());
+        if (permissionDB != null) {
+            permissionDB.setName(p.getName());
+            permissionDB.setApiPath(p.getApiPath());
+            permissionDB.setMethod(p.getMethod());
+            permissionDB.setModule(p.getModule());
 
-    ResultPaginationDTO rs = new ResultPaginationDTO();
-    ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+            // update
+            permissionDB = this.permissionRepository.save(permissionDB);
+            return permissionDB;
+        }
+        return null;
+    }
 
-    mt.setPage(pageable.getPageNumber() + 1);
-    mt.setPageSize(pageable.getPageSize());
+    public void delete(long id) {
+        // delete permission_role
+        Optional<Permission> permissionOptional = this.permissionRepository.findById(id);
+        Permission currentPermission = permissionOptional.get();
+        currentPermission.getRoles().forEach(role -> role.getPermissions().remove(currentPermission));
 
-    mt.setPages(pagePermission.getTotalPages());
-    mt.setTotal(pagePermission.getTotalElements());
+        // delete permission
+        this.permissionRepository.delete(currentPermission);
+    }
 
-    rs.setMeta(mt);
+    public ResultPaginationDTO getPermissions(Specification<Permission> spec, Pageable pageable) {
+        Page<Permission> pPermissions = this.permissionRepository.findAll(spec, pageable);
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
-    rs.setResult(pagePermission.getContent());
+        mt.setPage(pageable.getPageNumber() + 1);
+        mt.setPageSize(pageable.getPageSize());
 
-    return rs;
-  }
+        mt.setPages(pPermissions.getTotalPages());
+        mt.setTotal(pPermissions.getTotalElements());
+
+        rs.setMeta(mt);
+        rs.setResult(pPermissions.getContent());
+        return rs;
+    }
+
+    public boolean isSameName(Permission p) {
+        Permission permissionDB = this.fetchById(p.getId());
+        if (permissionDB != null) {
+            if (permissionDB.getName().equals(p.getName()))
+                return true;
+        }
+        return false;
+    }
 }
