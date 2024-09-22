@@ -20,8 +20,8 @@ public class SubscriberService {
 
     private final SubscriberRepository subscriberRepository;
     private final SkillRepository skillRepository;
-    private final EmailService emailService;
     private final JobRepository jobRepository;
+    private final EmailService emailService;
 
     public SubscriberService(
             SubscriberRepository subscriberRepository,
@@ -34,9 +34,9 @@ public class SubscriberService {
         this.emailService = emailService;
     }
 
-    // @Scheduled(cron = "*/30 * * * * *")
+    // @Scheduled(cron = "*/10 * * * * *")
     // public void testCron() {
-    // System.out.println("test cron");
+    // System.out.println(">>> TEST CRON");
     // }
 
     public boolean isExistsByEmail(String email) {
@@ -97,8 +97,10 @@ public class SubscriberService {
                 if (listSkills != null && listSkills.size() > 0) {
                     List<Job> listJobs = this.jobRepository.findBySkillsIn(listSkills);
                     if (listJobs != null && listJobs.size() > 0) {
+
                         List<ResEmailJob> arr = listJobs.stream().map(
                                 job -> this.convertJobToSendEmail(job)).collect(Collectors.toList());
+
                         this.emailService.sendEmailFromTemplateSync(
                                 sub.getEmail(),
                                 "Cơ hội việc làm hot đang chờ đón bạn, khám phá ngay",
@@ -109,5 +111,9 @@ public class SubscriberService {
                 }
             }
         }
+    }
+
+    public Subscriber findByEmail(String email) {
+        return this.subscriberRepository.findByEmail(email);
     }
 }
